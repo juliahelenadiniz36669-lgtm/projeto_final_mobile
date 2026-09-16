@@ -1,76 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const MeuApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+
+class MeuApp extends StatefulWidget {
+  const MeuApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'lêBrasil',
-      theme: ThemeData(
-        colorSchemeSeed: const Color.fromARGB(255, 132, 205, 254),
-        useMaterial3: true,
-      ),
-      home: const SplashScreen(),
-    );
-  }
+  State<MeuApp> createState() => _MeuAppState();
 }
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class _MeuAppState extends State<MeuApp> {
+  Color corPrimaria = Colors.indigo;
 
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
+  void mudarCor(Color novaCor) {
+    setState(() {
+      corPrimaria = novaCor;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              '../assets/images/Logo.png',
-              width: 150,
-              height: 150,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'lêBrasil',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
+    return MaterialApp(
+      title: 'Central de Apps',
+      theme: ThemeData(
+        colorSchemeSeed:  const Color.fromARGB(255, 132, 205, 254),
+        useMaterial3: true,
       ),
+      home: SplashScreen(mudarCor: mudarCor),
     );
   }
 }
+
 
 class AppInfo {
   final String nome;
@@ -84,114 +48,101 @@ class AppInfo {
   });
 }
 
-final List<AppInfo> meuApps = [
+final List<AppInfo> meusApps = [
   AppInfo(
-    nome: 'lêBrasil',
-    descricao: 'Aplicativo de leitura de notícias do Brasil.',
+    nome: 'Calculadora de Gasolina',
+    descricao: 'Calcula litros e custo de uma viagem',
     icone: Icons.local_gas_station,
   ),
   AppInfo(
-    nome: 'lêMundo',
-    descricao: 'Aplicativo de leitura de notícias do mundo.',
+    nome: 'Calculadora de Churrasco',
+    descricao: 'Calcula carne, bebida e carvão',
     icone: Icons.outdoor_grill,
+  ),
+  AppInfo(
+    nome: 'Frases Motivacionais',
+    descricao: 'Mostra frases aleatórias',
+    icone: Icons.auto_awesome,
+  ),
+  AppInfo(
+    nome: 'Lista de Tarefas',
+    descricao: 'Organiza suas tarefas do dia a dia',
+    icone: Icons.check_circle_outline,
+  ),
+  AppInfo(
+    nome: 'Placar de Pontos',
+    descricao: 'Acompanha a pontuação de jogadores',
+    icone: Icons.emoji_events,
   ),
 ];
 
+
+class SplashScreen extends StatefulWidget {
+  final void Function(Color) mudarCor;
+
+  const SplashScreen({super.key, required this.mudarCor});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginScreen(mudarCor: widget.mudarCor),
+        ),
+      );
+    }
+
+  }
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Theme.of(context).colorScheme.primary,
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            '../assets/images/Logo.png',
+            width: 150,
+            height: 150,
+          ),
+
+          const SizedBox(height: 16),
+          const Text(
+            'lêBrasil',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+}
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final void Function(Color) mudarCor;
+
+  const HomeScreen({super.key, required this.mudarCor});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Central de Apps'),
+        title: const Text("lêBrasil"),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Central de Apps',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Início'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Perfil'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sair'),
-              onTap: () => Navigator.pop(context),
-            ),
-            const Divider(),
-            for (var app in meuApps)
-              ListTile(
-                leading: Icon(app.icone),
-                title: Text(app.nome),
-                subtitle: Text(app.descricao),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-          ],
-        ),
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.95,
-        ),
-        itemCount: meuApps.length,
-        itemBuilder: (context, indice) {
-          final app = meuApps.elementAt(indice);
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    app.icone,
-                    size: 36,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    app.nome,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    app.descricao,
-                    style: const TextStyle(fontSize: 11),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      body: const Center(
+        child: Text('Em construção ...'),
       ),
     );
   }
