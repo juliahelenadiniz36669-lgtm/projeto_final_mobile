@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:math';
 
 void main() {
   runApp(const MeuApp());
@@ -98,23 +101,20 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final nomeSalvo = prefs.getString("nomeUsuario");
 
-
     if(!mounted) return;
-    if (nomeSalvo != null && nomeSalvo.isNotEmpty) {
+    if(nomeSalvo != null && nomeSalvo.isNotEmpty){
       Navigator.pushReplacement(context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(mudarCor: widget.mudarCor),
-        ),
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(mudarCor: widget.mudarCor),
+       ),
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(mudarCor: widget.mudarCor),
+        Navigator.pushReplacement(context,
+      MaterialPageRoute(
+        builder: (context) => LoginScreen(mudarCor: widget.mudarCor),
         ),
       );
     }
-
   }
 
   @override
@@ -158,11 +158,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> entrar() async {
     if (nomeController.text.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('nomeUsuario', nomeController.text);
-    if (!mounted) return;
+    await prefs.setString('nomeUsuario',nomeController.text);
+    if(!mounted) return;
     Navigator.pushReplacement(context,
       MaterialPageRoute(
-        builder:(context) => HomeScreen(mudarCor: widget.mudarCor)
+        builder: (context) => HomeScreen(mudarCor: widget.mudarCor),
       ),
     );
   }
@@ -198,11 +198,37 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final void Function(Color) mudarCor;
-
   const HomeScreen({super.key, required this.mudarCor});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+
+class _HomeScreenState extends State<HomeScreen>{
+  String nomePokemon = '';
+  String? spritePokemon;
+  bool carregando =true;
+
+  @override
+  void initState(){
+    super.initState();
+    buscarPokemon();
+  }
+
+  Future <void> buscarPokemon() async {
+    final id = Random().nextInt(15);
+    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/$id');
+    final resposta = await http.get(url);
+    final dados = jsonDecode (resposta.body);
+    setState(() {
+      nomePokemon = dados['name'];
+      spritePokemon = dados['sprites']['front_default'];
+      carregando = false;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +270,41 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: GridView.builder(
+      body: Column (
+        children: [ 
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Card(
+              color:Theme.of(context).colorScheme.primaryContainer,
+              child:Padding(
+                padding: const EdgeInsets.all(16),
+                child: carregando
+                ?const Center(child: CircularProgressIndicator())
+                :Row(
+                  children: [
+                    if(spritePokemon != null)
+                    Image.network(spritePokemon!,
+                    width: 56, height: 56,
+                    ),
+                    const SizedBox(width: 12,),
+                    Expanded(
+                      child: Text(
+                        'Pokemon do dia: ${nomePokemon[0]. toUpperCase()}${nomePokemon.substring(1)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ),
+                    ],
+                ),
+              ),
+            ),
+          ),
+        
+      
+  
+      Expanded (
+        child: GridView.builder(
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -287,75 +347,9 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-
-class ProfileScreen extends StatefulWidget {
-  final void Function(Color) mudarCor;
-
-  const ProfileScreen({super.key, required this.mudarCor});
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  String nome = '';
-
-  final List<Color> coresDisponiveis = [
-    Colors.indigo,
-    Colors.teal,
-    Colors.deepOrange,
-    Colors.pink,
-    Colors.green,
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    carregarNome();
-  }
-
-  Future<void> carregarNome() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      nome = prefs.getString('nomeUsuario') ?? '';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 50,
-              child: Icon(Icons.person, size: 40),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              nome,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Cor do app',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-          ],
-        ),
       ),
+      ],
+    ),
     );
   }
 }
